@@ -14,6 +14,7 @@ type Packet struct {
 func (p *Packet) Serialize() []byte {
 	hb, err := p.Header.UnPack()
 	if err != nil {
+		log.Printf("Error serialize packet:%s\n", err.Error())
 		return nil
 	}
 	hl := p.Header.Len()
@@ -32,7 +33,7 @@ func (p *Packet) Serialize() []byte {
 
 func (p *Packet) SetContent(ctnt []byte) {
 	p.content = ctnt
-	p.Header.SetCtntLen(len(ctnt))
+	p.Header.SetCtntLen(int32(len(ctnt)))
 }
 
 func (p *Packet) GetContent() []byte {
@@ -41,9 +42,18 @@ func (p *Packet) GetContent() []byte {
 
 func (p *Packet) SetContext(ctx []byte) {
 	p.context = ctx
-	p.Header.SetCtxLen(len(ctx))
+	p.Header.SetCtxLen(int32(len(ctx)))
 }
 
 func (p *Packet) GetContext() []byte {
 	return p.context
+}
+
+func NewPacket(h Header, ctnt, ctx []byte) *Packet {
+	p := &Packet{
+		Header: h,
+	}
+	p.SetContext(ctx)
+	p.SetContent(ctnt)
+	return p
 }

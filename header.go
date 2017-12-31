@@ -9,19 +9,19 @@ import (
 )
 
 type Header interface {
-	ReadHeader(*net.Conn) error //从conn中读取header
+	ReadHeader(net.Conn) error //从conn中读取header
 
-	Len() int
-	GetMessageID() int //消息类型
-	SetMessageID(int)
+	Len() int32
+	GetMessageID() int32 //消息类型
+	SetMessageID(int32)
 
-	GetCtntLen() int //消息正文
-	SetCtntLen(int)
+	GetCtntLen() int32 //消息正文
+	SetCtntLen(int32)
 
-	GetCtxLen() int //消息上下文
-	SetCtxLen(int)
+	GetCtxLen() int32 //消息上下文
+	SetCtxLen(int32)
 
-	GetPacketLen() int //整个包的长度
+	GetPacketLen() int32 //整个包的长度
 
 	String() string
 
@@ -30,50 +30,54 @@ type Header interface {
 }
 
 type SocketHeader struct {
-	MessageID  int
-	ContentLen int
-	ContextLen int
-	MessageLen int
+	MessageID  int32
+	ContentLen int32
+	ContextLen int32
 }
 
-func (h *SocketHeader) ReadHeader(conn *net.Conn) error {
-	return nil
+func (h *SocketHeader) ReadHeader(conn net.Conn) error {
+	buf := make([]byte, h.Len())
+	err := binary.Read(conn, binary.BigEndian, buf)
+	if err != nil {
+		return err
+	}
+	return h.Pack(buf)
 }
 
-func (h *SocketHeader) Len() int {
-	return *(*int)(unsafe.Pointer(unsafe.Sizeof(*h)))
+func (h *SocketHeader) Len() int32 {
+	return int32(unsafe.Sizeof(*h))
 }
 
-func (h *SocketHeader) GetMessageID() int {
+func (h *SocketHeader) GetMessageID() int32 {
 	return h.MessageID
 }
 
-func (h *SocketHeader) SetMessageID(id int) {
+func (h *SocketHeader) SetMessageID(id int32) {
 	h.MessageID = id
 }
 
-func (h *SocketHeader) GetCtntLen() int {
+func (h *SocketHeader) GetCtntLen() int32 {
 	return h.ContentLen
 }
 
-func (h *SocketHeader) SetCtntLen(l int) {
+func (h *SocketHeader) SetCtntLen(l int32) {
 	h.ContentLen = l
 }
 
-func (h *SocketHeader) GetCtxLen() int {
+func (h *SocketHeader) GetCtxLen() int32 {
 	return h.ContentLen
 }
 
-func (h *SocketHeader) SetCtxLen(l int) {
+func (h *SocketHeader) SetCtxLen(l int32) {
 	h.ContextLen = l
 }
 
-func (h *SocketHeader) GetPacketLen() int {
+func (h *SocketHeader) GetPacketLen() int32 {
 	return h.Len() + h.GetCtntLen() + h.GetCtxLen()
 }
 
 func (h *SocketHeader) String() string {
-	return fmt.Sprintf("socketheader:msgid[%d],ctntlen[%d],ctxlen[%d],msglen[%d]", h.MessageID)
+	return fmt.Sprintf("socketheader:msgid[%d],ctntlen[%d],ctxlen[%d]", h.MessageID, h.GetCtntLen(), h.GetCtxLen())
 }
 
 func (h *SocketHeader) UnPack() ([]byte, error) {

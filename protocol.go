@@ -12,13 +12,12 @@ type Protocol struct {
 
 func (p *Protocol) ReadConnPacket(conn *net.TCPConn) (socket.ConnPacket, error) {
 	var ctnt, ctx []byte
-
 	h, err := readHeader(conn)
 	if err != nil {
 		return nil, err
 	}
-	ctntLen := h.GetCtntLen()
-	ctxLen := h.GetCtxLen()
+	ctntLen := int32(h.GetCtntLen())
+	ctxLen := int32(h.GetCtxLen())
 	if ctxLen > 0 {
 		ctx, err = readBytes(conn, ctxLen)
 		if err != nil {
@@ -37,6 +36,7 @@ func (p *Protocol) ReadConnPacket(conn *net.TCPConn) (socket.ConnPacket, error) 
 		content: ctnt,
 		context: ctx,
 	}
+	log.Printf("ctnt:%s\n", string(ctnt))
 	if p.Mux != nil {
 		muxObj := p.Mux.GetMuxObj(h.MessageID)
 		if muxObj != nil {
@@ -49,19 +49,22 @@ func (p *Protocol) ReadConnPacket(conn *net.TCPConn) (socket.ConnPacket, error) 
 
 func readHeader(conn *net.TCPConn) (*SocketHeader, error) {
 	h := &SocketHeader{}
-	buf := make([]byte, h.Len())
+	hl := h.Len()
+	buf := make([]byte, hl)
 	if _, err := io.ReadFull(conn, buf); err != nil {
 		return nil, err
 	}
-
+	log.Printf("buf:%v,lb:%d\n", buf, len(buf))
 	if err := h.Pack(buf); err != nil {
+		log.Printf("err pack:%s\n", err.Error())
 		return nil, err
 	}
+	log.Printf("header:%s\n", h.String())
 	return h, nil
 
 }
 
-func readBytes(conn *net.TCPConn, length int) ([]byte, error) {
+func readBytes(conn *net.TCPConn, length int32) ([]byte, error) {
 	if length == 0 {
 		return []byte{}, nil
 	}
