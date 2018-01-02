@@ -65,7 +65,7 @@ func (h *SocketHeader) SetCtntLen(l int32) {
 }
 
 func (h *SocketHeader) GetCtxLen() int32 {
-	return h.ContentLen
+	return h.ContextLen
 }
 
 func (h *SocketHeader) SetCtxLen(l int32) {

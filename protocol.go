@@ -36,7 +36,6 @@ func (p *Protocol) ReadConnPacket(conn *net.TCPConn) (socket.ConnPacket, error) 
 		content: ctnt,
 		context: ctx,
 	}
-	log.Printf("ctnt:%s\n", string(ctnt))
 	if p.Mux != nil {
 		muxObj := p.Mux.GetMuxObj(h.MessageID)
 		if muxObj != nil {
@@ -54,14 +53,11 @@ func readHeader(conn *net.TCPConn) (*SocketHeader, error) {
 	if _, err := io.ReadFull(conn, buf); err != nil {
 		return nil, err
 	}
-	log.Printf("buf:%v,lb:%d\n", buf, len(buf))
 	if err := h.Pack(buf); err != nil {
 		log.Printf("err pack:%s\n", err.Error())
 		return nil, err
 	}
-	log.Printf("header:%s\n", h.String())
 	return h, nil
-
 }
 
 func readBytes(conn *net.TCPConn, length int32) ([]byte, error) {
